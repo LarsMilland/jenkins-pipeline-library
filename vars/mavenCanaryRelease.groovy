@@ -29,8 +29,11 @@ def call(body) {
     } else {
 
       // couldnt get the docker:push to work, maybe it will work after switching to fabric8:push
-      //sh "mvn io.fabric8:docker-maven-plugin:${dockerMavenPluginVersion}:push -Ddocker.push.registry=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT} -Dspring.boot.name=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}:${config.version} -Dfabric8.dockerUser=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/fabric8/"
+      echo 'Pushing docker image to local fabric8 repository'
+      sh "mvn io.fabric8:docker-maven-plugin:${dockerMavenPluginVersion}:push -Ddocker.push.registry=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT} -Dspring.boot.name=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}:${config.version} -Dfabric8.dockerUser=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/fabric8/"
+      echo 'Done pushing docker image to local fabric8 repository'
       kubernetes.image().withName("${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}").push().withTag("${config.version}").toRegistry()
+      echo 'Done tagging fabric8 repository docker image to OpenShift registry'
     }
 
     if (flow.hasService("content-repository")) {
