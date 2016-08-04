@@ -17,18 +17,22 @@ def call(body) {
     def groupId = m.groupId.split( '\\.' )
     def user = groupId[groupId.size()-1].trim()
 
+    echo 'Building docker image to local fabric8 repository V4'
+
     sh "mvn install -U org.apache.maven.plugins:maven-deploy-plugin:2.8.2:deploy io.fabric8:docker-maven-plugin:${dockerMavenPluginVersion}:build -Dfabric8.image=${user}/${env.JOB_NAME}:${config.version} -Dspring.boot.name=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}:${config.version} -Dfabric8.dockerUser=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/"
 
+    echo 'Done pushing docker image to local fabric8 repository'
+    kubernetes.image().withName("${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}").push().withTag("${config.version}").toRegistry()
+    echo 'Done tagging fabric8 repository docker image to OpenShift registry'
+
+
     // until we port the quickstarts to use the new f-m-p we need to force a tag and push to a registry if running in a cluster
-    echo 'Pushing docker image to local fabric8 repository V3'
+    echo 'Pushing docker image to local fabric8 repository V4'
     sh "mvn io.fabric8:docker-maven-plugin:${dockerMavenPluginVersion}:push -Ddocker.push.registry=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT} -Dspring.boot.name=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}:${config.version} -Dfabric8.dockerUser=${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/fabric8/"
 
 //    echo 'Pushing docker image to local fabric8 repository'
 //    kubernetes.image().withName("${user}/${env.JOB_NAME}:${config.version}").tag().inRepository("${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}").withTag("${config.version}")
 
-    echo 'Done pushing docker image to local fabric8 repository'
-    kubernetes.image().withName("${env.FABRIC8_DOCKER_REGISTRY_SERVICE_HOST}:${env.FABRIC8_DOCKER_REGISTRY_SERVICE_PORT}/${user}/${env.JOB_NAME}").push().withTag("${config.version}").toRegistry()
-    echo 'Done tagging fabric8 repository docker image to OpenShift registry'
 
 
     if (flow.isSingleNode()){
